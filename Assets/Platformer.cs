@@ -34,6 +34,10 @@ public class Platformer : MonoBehaviour
 	int _blinkState;
 	Text _poem;
 	Button _play;
+	Button _reload;
+	CanvasGroup _rightTut;
+	CanvasGroup _leftTut;
+	CanvasGroup _upTut;
 
 	//game
 	int _levelIndex;
@@ -47,6 +51,13 @@ public class Platformer : MonoBehaviour
 	TriggerZone [] _triggers;
 	FallCube [] _fallCubes;
 	public UnityEvent _allFallen;
+	public UnityEvent _keyRetrieved;
+
+	//audio
+	AudioSource _keyAudio;
+	AudioSource _lockAudio;
+	AudioSource _jumpAudio;
+	AudioSource _landAudio;
 
     // Start is called before the first frame update
     void Start()
@@ -59,16 +70,20 @@ public class Platformer : MonoBehaviour
 		_blink = GameObject.Find("Blink").GetComponent<CanvasGroup>();
 		_blink.alpha=1f;
 		_poem = GameObject.Find("Poem").GetComponent<Text>();
-		string poemPath = Application.streamingAssetsPath+"/poem.txt";
-		string[] lines = File.ReadAllLines(poemPath);
+		//string poemPath = Application.streamingAssetsPath+"/poem.txt";
+		TextAsset myTxtData=(TextAsset)Resources.Load("poem");
+		//string[] lines = File.ReadAllLines(poemPath);
+		string[] lines = myTxtData.text.Split('\n');
 		_levelIndex = SceneManager.GetActiveScene().buildIndex;
 		_poem.text=lines[_levelIndex];
 		_play=GameObject.Find("PlayButton").GetComponent<Button>();
 		_play.onClick.AddListener(delegate {StartLevel();});
-		_play.Select();
+		//_play.Select();
 		//_blinkState=1;
 		_key = GameObject.Find("Key").transform;
+		_keyAudio = _key.GetComponent<AudioSource>();
 		_lock = GameObject.Find("Lock").transform;
+		_lockAudio = _lock.GetComponent<AudioSource>();
 		_keyStartPos=_key.position;
 		if(!_key.GetComponent<BoxCollider>().enabled)
 		{
@@ -79,6 +94,19 @@ public class Platformer : MonoBehaviour
 		}
 		_triggers = FindObjectsOfType<TriggerZone>();
 		_fallCubes = FindObjectsOfType<FallCube>();
+		_jumpAudio=GetComponent<AudioSource>();
+		_landAudio=transform.GetChild(1).GetComponent<AudioSource>();
+		_reload = GameObject.Find("Reload").GetComponent<Button>();
+		_reload.onClick.AddListener(delegate {
+				SceneManager.LoadScene(_levelIndex);});
+		_reload.gameObject.SetActive(false);
+
+		GameObject tutCanvas = GameObject.Find("TutCanvas");
+		if(tutCanvas!=null){
+			_leftTut=tutCanvas.transform.Find("leftTut").GetComponent<CanvasGroup>();
+			_rightTut=tutCanvas.transform.Find("rightTut").GetComponent<CanvasGroup>();
+			_upTut = tutCanvas.transform.Find("upTut").GetComponent<CanvasGroup>();
+		}
     }
 
 	void SnapStartingHeight(){
@@ -101,11 +129,26 @@ public class Platformer : MonoBehaviour
 			_movement+=Vector3.right*Input.GetAxis("Horizontal");
 			transform.position+=_movement*Time.deltaTime*_walkSpeed;
 
+			if(_rightTut!=null){
+				if(_movement.x>0)
+					FadeOutCanvasGroup(_rightTut);
+				else if(_movement.x<0)
+					FadeOutCanvasGroup(_leftTut);
+			}
+
 			//check jump
 			if(_grounded && Input.GetButtonDown("Jump")){
 				_grounded=false;
 				_fallVel=_jumpSpeed;
+				_jumpAudio.Play();
+				if(_upTut!=null)
+					FadeOutCanvasGroup(_upTut);
+
 			}
+		}
+		else if(_blinkState==0){
+			if(Input.GetKeyDown(KeyCode.Space)||Input.GetKeyDown(KeyCode.Return))
+				StartLevel();
 		}
 		
 		//check for wall
@@ -121,10 +164,15 @@ public class Platformer : MonoBehaviour
 				_key.localPosition=Vector3.back+Vector3.right*0.4f;
 				_key.GetComponent<BoxCollider>().enabled=false;
 				_key.GetChild(0).GetComponent<BoxCollider>().enabled=false;
+				_keyAudio.Play();
+				_keyRetrieved.Invoke();
 			}
 			else if(_hasKey && _colliders[i].name=="Lock"){
-				_lock.gameObject.SetActive(false);
+				//_lock.gameObject.SetActive(false);
+				_lock.GetComponent<MeshRenderer>().enabled=false;
+				_lock.GetComponent<BoxCollider>().enabled=false;
 				_key.gameObject.SetActive(false);
+				_lockAudio.Play();
 			}
 			else if(_colliders[i].name=="WinZone"){
 				if(_levelIndex+1<SceneManager.sceneCountInBuildSettings)
@@ -195,7 +243,10 @@ public class Platformer : MonoBehaviour
 			p.y+=_fallVel*Time.deltaTime;
 			//done falling
 			if(p.y<_groundPoint.y+_playerHeight)//-_stepHeight*_fallFactor)
+			{
 				_grounded=true;
+				_landAudio.Play();
+			}
 		}
 		//normal walking or step up/down
 		else
@@ -226,6 +277,8 @@ public class Platformer : MonoBehaviour
 
 	void StartLevel(){
 		_blinkState=1;
+		_play.interactable=false;
+		_reload.gameObject.SetActive(true);
 	}
 
 	public void ResetLevel(){
@@ -241,7 +294,9 @@ public class Platformer : MonoBehaviour
 			tz.gameObject.SetActive(true);
 		transform.position=_startPos;
 		ResetKey();
-		_lock.gameObject.SetActive(true);
+		//_lock.gameObject.SetActive(true);
+		_lock.GetComponent<MeshRenderer>().enabled=true;
+		_lock.GetComponent<BoxCollider>().enabled=true;
 	}
 
 	public void ResetKey(){
@@ -267,6 +322,22 @@ public class Platformer : MonoBehaviour
 		}
 		if(allFallen)
 			_allFallen.Invoke();
+	}
+
+	public void FadeOutCanvasGroup(CanvasGroup cg){
+		if(cg.alpha<1)
+			return;
+		StartCoroutine(FadeOutCg(cg));
+	}
+
+	IEnumerator FadeOutCg(CanvasGroup cg){
+		float timer=1;
+		while(timer>=0){
+			timer-=Time.deltaTime*2;
+			cg.alpha=timer;
+			yield return null;
+		}
+		cg.alpha=0;
 	}
 
 	void OnDrawGizmos(){

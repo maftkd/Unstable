@@ -15,11 +15,20 @@ public class FallCube : MonoBehaviour
 	public bool _return;
 	[HideInInspector]
 	public bool _fallen;
+	AudioSource _audio;
+	Material _mat;
+	public Color _normalColor;
+	public Color _fallColor;
+	public Color _returnColor;
+
     // Start is called before the first frame update
     void Start()
     {
 		_p = FindObjectOfType<Platformer>();
 		_startPos=transform.position;
+		_audio = transform.GetChild(0).GetComponent<AudioSource>();
+		_mat=GetComponent<MeshRenderer>().material;
+		_mat.SetColor("_Color",_normalColor);
     }
 
     // Update is called once per frame
@@ -32,6 +41,10 @@ public class FallCube : MonoBehaviour
 				{
 					if(pos.y>=transform.position.y+_colYMin&&pos.y<=transform.position.y+_colYMax){
 						_state=1;
+						if(_return)
+							_mat.SetColor("_Color",_returnColor);
+						else
+							_mat.SetColor("_Color",_fallColor);
 					}
 				}
 				break;
@@ -74,12 +87,15 @@ public class FallCube : MonoBehaviour
 		_fallSpeed=0;
 		_state=0;
 		_fallen=false;
+		_mat.SetColor("_Color",_normalColor);
 	}
 
 	public void Fall(){
 		_fallen=true;
 		_state=2;
 		_p.CheckAllFall();
+		_audio.Play();
+
 	}
 
 	void OnDrawGizmos(){
