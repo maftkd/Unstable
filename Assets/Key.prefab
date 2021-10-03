@@ -198,10 +198,30 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 7250886769045755018}
     m_Modifications:
+    - target: {fileID: 503245863985610760, guid: c1743b00dd1c14d48bcad3a155598910,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 818945017559765464, guid: c1743b00dd1c14d48bcad3a155598910,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1391220540543888423, guid: c1743b00dd1c14d48bcad3a155598910,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1430571908787269455, guid: c1743b00dd1c14d48bcad3a155598910,
         type: 3}
       propertyPath: m_Name
       value: Shaft
+      objectReference: {fileID: 0}
+    - target: {fileID: 1587611602007254425, guid: c1743b00dd1c14d48bcad3a155598910,
+        type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7615681685221416529, guid: c1743b00dd1c14d48bcad3a155598910,
         type: 3}

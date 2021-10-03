@@ -169,7 +169,10 @@ public class Platformer : MonoBehaviour
 			}
 			else if(_hasKey && _colliders[i].name=="Lock"){
 				//_lock.gameObject.SetActive(false);
-				_lock.GetComponent<MeshRenderer>().enabled=false;
+				MeshRenderer[] meshes = _lock.GetComponentsInChildren<MeshRenderer>();
+				foreach(MeshRenderer mr in meshes)
+					mr.enabled=false;
+				//_lock.GetComponent<MeshRenderer>().enabled=false;
 				_lock.GetComponent<BoxCollider>().enabled=false;
 				_key.gameObject.SetActive(false);
 				_lockAudio.Play();
@@ -295,7 +298,10 @@ public class Platformer : MonoBehaviour
 		transform.position=_startPos;
 		ResetKey();
 		//_lock.gameObject.SetActive(true);
-		_lock.GetComponent<MeshRenderer>().enabled=true;
+		//_lock.GetComponent<MeshRenderer>().enabled=true;
+		MeshRenderer[] meshes = _lock.GetComponentsInChildren<MeshRenderer>();
+		foreach(MeshRenderer mr in meshes)
+			mr.enabled=true;
 		_lock.GetComponent<BoxCollider>().enabled=true;
 	}
 
